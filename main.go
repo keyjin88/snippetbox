@@ -18,7 +18,13 @@ func showSnippet(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Show snippets"))
 }
 
+// Обработчик для создания новой заметки
 func createSnippet(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		http.Error(w, "Method not allowed", 405)
+		return
+	}
 	w.Write([]byte("Форма для создания заметок"))
 }
 
