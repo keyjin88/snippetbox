@@ -2,15 +2,18 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 )
 
 func main() {
 	addr := flag.String("addr", ":4000", "Сетевой адресс HTTP")
 	flag.Parse()
+
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", home)
@@ -21,9 +24,18 @@ func main() {
 	mux.Handle("/static", http.NotFoundHandler())
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
-	fmt.Printf("Start server on: %s", *addr)
-	err := http.ListenAndServe(*addr, mux)
-	log.Fatal(err)
+	// Инициализируем новую структуру http.Server. Мы устанавливаем поля Addr и Handler, так
+	// что сервер использует тот же сетевой адрес и маршруты, что и раньше, и назначаем
+	// поле ErrorLog, чтобы сервер использовал наш логгер при возникновении проблем.
+	srv := &http.Server{
+		Addr:     *addr,
+		ErrorLog: errorLog,
+		Handler:  mux,
+	}
+
+	infoLog.Printf("Start server on: %s", *addr)
+	err := srv.ListenAndServe()
+	errorLog.Fatal(err)
 }
 
 type neuteredFileSystem struct {
